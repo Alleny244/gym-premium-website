@@ -1,4 +1,5 @@
 "use client";
+// Hot-reload trigger
 
 import { useEffect, useRef } from "react";
 import Hero from "@/components/sections/Hero";
