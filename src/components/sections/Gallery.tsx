@@ -38,7 +38,7 @@ export default function Gallery() {
           scrollTrigger: {
             trigger: triggerRef.current,
             start: "top top",
-            end: () => `+=${scrollAmount + window.innerHeight}`, 
+            end: "bottom bottom", 
             scrub: 1,
             pin: true,
             pinSpacing: true,
@@ -81,7 +81,7 @@ export default function Gallery() {
   }, []);
 
   return (
-    <section ref={triggerRef} className="bg-white overflow-hidden relative" id="gallery">
+    <section ref={triggerRef} className="bg-white overflow-hidden relative h-[300vh]" id="gallery">
       {/* Background Text Reveal (Exo Ape Style) */}
       <div className="hidden md:block absolute left-20 top-1/2 -translate-y-1/2 z-0 pointer-events-none select-none">
         <h2 className="text-[20vw] font-bold font-outfit text-black opacity-[0.03] whitespace-nowrap">

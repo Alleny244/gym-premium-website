@@ -27,9 +27,8 @@ export default function CinematicScroll() {
       
       const img = new Image();
       const paddedIndex = currentIndex.toString().padStart(3, '0');
-      // Dynamically handle the basePath for both local dev and production
-      const pathPrefix = window.location.pathname.startsWith('/gym-premium-website') ? '/gym-premium-website' : '';
-      img.src = `${pathPrefix}/dumbbell/ezgif-frame-${paddedIndex}.png`;
+      // For local and GitHub Pages, we use the absolute path from the root
+      img.src = `/gym-premium-website/dumbbell/ezgif-frame-${paddedIndex}.png`;
       
       img.onload = () => {
         if (!keepLoading) return;
