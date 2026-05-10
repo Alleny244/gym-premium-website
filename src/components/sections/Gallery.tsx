@@ -36,7 +36,7 @@ export default function Gallery() {
           scrollTrigger: {
             trigger: triggerRef.current,
             start: "top top",
-            end: () => `+=${scrollAmount}`, // Move 1:1 with the content width for perfect pacing
+            end: () => `+=${scrollAmount + window.innerHeight}`, // Added buffer to ensure unpinning
             scrub: true,
             pin: true,
             pinSpacing: true,
@@ -45,6 +45,9 @@ export default function Gallery() {
             onUpdate: (self) => {
               const skew = self.getVelocity() / 500;
               gsap.to(sectionRef.current, { skewX: skew, duration: 0.5, overwrite: true });
+            },
+            onLeave: () => {
+              ScrollTrigger.refresh();
             }
           }
         });

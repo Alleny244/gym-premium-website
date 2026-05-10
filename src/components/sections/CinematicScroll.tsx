@@ -153,11 +153,15 @@ export default function CinematicScroll() {
           scrollTrigger: {
             trigger: containerRef.current,
             start: "top top",
-            end: "+=400%",
+            end: "bottom bottom", // Use the full height of the container
             scrub: true,
             onUpdate: () => {
               requestAnimationFrame(() => {
-                renderFrame(Math.round(playheadRef.current.frame));
+                const frameIndex = Math.min(
+                  Math.max(0, Math.round(playheadRef.current.frame)),
+                  frameCountRef.current - 1
+                );
+                renderFrame(frameIndex);
               });
             }
           }
