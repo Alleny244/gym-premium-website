@@ -74,17 +74,31 @@ export default function CinematicScroll() {
     // Canvas rendering function
     const renderFrame = (index) => {
       const canvas = canvasRef.current;
+      if (!canvas) return;
+      
       const img = framesRef.current[index];
+      if (!img || !img.complete) {
+        // Fallback: try to find the nearest loaded frame
+        for (let i = index; i >= 0; i--) {
+          if (framesRef.current[i]?.complete) {
+             const fallbackImg = framesRef.current[i];
+             drawToCanvas(canvas, fallbackImg);
+             return;
+          }
+        }
+        return;
+      }
       
-      if (!canvas || !img) return;
-      
+      drawToCanvas(canvas, img);
+    };
+
+    const drawToCanvas = (canvas, img) => {
       const ctx = canvas.getContext("2d");
-      
-      // Use the logical width/height calculated in resizeCanvas
+      if (!ctx || !img) return;
+
       const logicalWidth = canvas._logicalWidth || canvas.width;
       const logicalHeight = canvas._logicalHeight || canvas.height;
       
-      // Calculate object-fit: cover equivalent
       const hRatio = logicalWidth / img.width;
       const vRatio = logicalHeight / img.height;
       const ratio = Math.max(hRatio, vRatio);
@@ -92,9 +106,7 @@ export default function CinematicScroll() {
       const centerShift_x = (logicalWidth - img.width * ratio) / 2;
       const centerShift_y = (logicalHeight - img.height * ratio) / 2;
       
-      // Clear with logical coordinates since ctx is scaled
       ctx.clearRect(0, 0, logicalWidth, logicalHeight);
-      
       ctx.drawImage(
         img, 
         0, 0, img.width, img.height,
@@ -177,7 +189,7 @@ export default function CinematicScroll() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full h-[400vh] bg-[var(--color-background)]">
+    <div ref={containerRef} className="relative w-full h-[600vh] bg-[var(--color-background)]">
       {/* Sticky container that stays on screen while scrolling down */}
       <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center bg-[var(--color-background)]">
         
