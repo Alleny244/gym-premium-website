@@ -27,7 +27,10 @@ export default function CinematicScroll() {
       
       const img = new Image();
       const paddedIndex = currentIndex.toString().padStart(3, '0');
-      img.src = `/gym-premium-website/dumbbell/ezgif-frame-${paddedIndex}.png`;
+      // For GitHub Pages, we need to handle the basePath correctly
+      const isProd = process.env.NODE_ENV === 'production';
+      const basePath = isProd ? '/gym-premium-website' : '/gym-premium-website'; 
+      img.src = `${basePath}/dumbbell/ezgif-frame-${paddedIndex}.png`;
       
       img.onload = () => {
         if (!keepLoading) return;
@@ -35,6 +38,15 @@ export default function CinematicScroll() {
         framesRef.current.push(img);
         framesLoaded++;
         currentIndex++;
+        
+        // Stop at 192 frames (actual count in public/dumbbell)
+        if (currentIndex > 192) {
+          keepLoading = false;
+          frameCountRef.current = framesRef.current.length;
+          setIsLoaded(true);
+          setupAnimation();
+          return;
+        }
         
         // Render the very first frame immediately once it loads
         if (framesLoaded === 1) {

@@ -19,9 +19,8 @@ function RevealSection({ children }: { children: React.ReactNode }) {
   });
 
   // Scale down and fade as the section reaches the top and scrolls past
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.9]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
     <motion.div 

@@ -36,9 +36,10 @@ export default function Gallery() {
           scrollTrigger: {
             trigger: triggerRef.current,
             start: "top top",
-            end: () => `+=150%`, // Snappier horizontal scroll (1.5x viewport height)
+            end: () => `+=${scrollAmount}`, // Move 1:1 with the content width for perfect pacing
             scrub: true,
             pin: true,
+            pinSpacing: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
