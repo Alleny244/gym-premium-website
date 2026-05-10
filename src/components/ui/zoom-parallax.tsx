@@ -21,7 +21,7 @@ export function ZoomParallax({ images }: ZoomParallaxProps) {
 		offset: ['start start', 'end end'],
 	});
 
-	// Use scrollYProgress directly because Lenis already handles smoothing
+	// scrollYProgress tracks native document scroll
 	const scale4 = useTransform(scrollYProgress, [0, 1], [1, 4]);
 	const scale5 = useTransform(scrollYProgress, [0, 1], [1, 5]);
 	const scale6 = useTransform(scrollYProgress, [0, 1], [1, 6]);

@@ -34,8 +34,8 @@ export default function Testimonials() {
   ));
 
   return (
-    <section className="pt-12 pb-12 bg-white overflow-hidden relative" id="testimonials">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-16">
+    <section className="pt-12 pb-8 md:pb-10 bg-white overflow-hidden relative" id="testimonials">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-8 md:mb-10">
         <div className="text-left">
           <TextReveal>
             <h2 className="text-4xl md:text-6xl font-bold font-outfit mb-6 text-black">

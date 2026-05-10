@@ -4,12 +4,12 @@ import { Check } from 'lucide-react'
 
 export default function Memberships() {
   return (
-    <section className="py-16 bg-white relative overflow-hidden">
+    <section className="relative overflow-hidden bg-white pt-12 pb-20 md:pt-16 md:pb-28">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-orange/5 to-transparent pointer-events-none" />
       
-      <div className="container mx-auto px-6 lg:px-12">
-        <div className="text-center max-w-2xl mx-auto mb-20">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
           <TextReveal>
             <h2 className="text-4xl md:text-6xl font-bold font-outfit mb-6 text-black">Invest in Yourself.</h2>
           </TextReveal>

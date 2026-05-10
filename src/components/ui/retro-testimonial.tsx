@@ -168,6 +168,8 @@ const TestimonialCard = ({
 }) => {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const onCardCloseRef = useRef(onCardClose);
+	onCardCloseRef.current = onCardClose;
 
 	const handleExpand = () => {
 		return setIsExpanded(true);
@@ -178,33 +180,34 @@ const TestimonialCard = ({
 	};
 
 	useEffect(() => {
+		if (!isExpanded) return;
+
+		const scrollY = window.scrollY;
+		document.body.dataset.scrollY = String(scrollY);
+		document.body.style.position = "fixed";
+		document.body.style.top = `-${scrollY}px`;
+		document.body.style.width = "100%";
+		document.body.style.overflow = "hidden";
+
 		const handleEscapeKey = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
-				handleCollapse();
+				setIsExpanded(false);
+				onCardCloseRef.current();
 			}
 		};
+		window.addEventListener("keydown", handleEscapeKey);
 
-		if (isExpanded) {
-			const scrollY = window.scrollY;
-			document.body.style.position = "fixed";
-			document.body.style.top = `-${scrollY}px`;
-			document.body.style.width = "100%";
-			document.body.style.overflow = "hidden";
-			document.body.dataset.scrollY = scrollY.toString();
-		} else {
-			const scrollY = parseInt(document.body.dataset.scrollY || "0", 10);
+		return () => {
+			window.removeEventListener("keydown", handleEscapeKey);
 			document.body.style.position = "";
 			document.body.style.top = "";
 			document.body.style.width = "";
 			document.body.style.overflow = "";
-			if (!isNaN(scrollY)) {
-				window.scrollTo({top: scrollY, behavior: "instant"});
+			const y = parseInt(document.body.dataset.scrollY || "0", 10);
+			delete document.body.dataset.scrollY;
+			if (!Number.isNaN(y)) {
+				window.scrollTo({ top: y, behavior: "instant" });
 			}
-		}
-
-		window.addEventListener("keydown", handleEscapeKey);
-		return () => {
-			return window.removeEventListener("keydown", handleEscapeKey);
 		};
 	}, [isExpanded]);
 

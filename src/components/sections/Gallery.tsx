@@ -10,127 +10,150 @@ import { galleryAssets } from "@/data/gallery";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Gallery() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    let ctx = gsap.context(() => {
+    const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
-      
+
       mm.add("(min-width: 768px)", () => {
-        if (!sectionRef.current || !triggerRef.current) return;
-        
-        const scrollAmount = Math.max(0, sectionRef.current.scrollWidth - window.innerWidth);
-        
-        // Refresh ScrollTrigger to ensure correct measurements
-        setTimeout(() => {
-          ScrollTrigger.refresh();
-        }, 100);
-        
-        console.log(`[Gallery] Initializing horizontal scroll. Amount: ${scrollAmount}px`);
-        
-        // Main horizontal scroll animation
-        gsap.to(sectionRef.current, {
-          x: -scrollAmount,
-          skewX: -2,
+        const track = trackRef.current;
+        const pinEl = pinRef.current;
+        const viewport = viewportRef.current;
+        if (!track || !pinEl || !viewport) return;
+
+        /** Must match visible clip width — window.innerWidth was wrong (padding / scrollbar) and broke scrub */
+        const horizontalPixels = () =>
+          Math.max(0, track.scrollWidth - viewport.clientWidth);
+
+        let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+        const scheduleRefresh = () => {
+          if (refreshTimer) clearTimeout(refreshTimer);
+          refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 80);
+        };
+
+        const ro = new ResizeObserver(scheduleRefresh);
+        ro.observe(track);
+        ro.observe(viewport);
+
+        requestAnimationFrame(scheduleRefresh);
+        setTimeout(scheduleRefresh, 500);
+
+        /*
+         * Do NOT tween skew in onUpdate — it overwrites the transform GSAP uses for x scrub → cards look “stuck”.
+         * Avoid overflow-hidden on outer <section> — it breaks pin positioning on many browsers.
+         */
+        const scrollDistance = () =>
+          Math.max(horizontalPixels(), 1);
+
+        gsap.to(track, {
+          x: () => -horizontalPixels(),
           ease: "none",
           scrollTrigger: {
-            trigger: triggerRef.current,
+            trigger: pinEl,
             start: "top top",
-            end: "bottom bottom", 
-            scrub: 1,
+            end: () => `+=${scrollDistance()}`,
+            scrub: true,
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              const skew = self.getVelocity() / 500;
-              gsap.to(sectionRef.current, { skewX: skew, duration: 0.5, overwrite: true });
-            },
-            onLeave: () => {
-              console.log("[Gallery] Scroll finished, unpinning...");
-              ScrollTrigger.refresh();
-            }
-          }
+          },
         });
 
-        // Individual card parallax
-        cardsRef.current.forEach((card, i) => {
-          if (!card) return;
-          const img = card.querySelector("img");
-          
-          gsap.fromTo(img, 
-            { x: "-10%" },
-            { 
-              x: "10%",
-              ease: "none",
-              scrollTrigger: {
-                trigger: card,
-                start: "left right",
-                end: "right left",
-                scrub: true,
-              }
-            }
-          );
-        });
+        return () => {
+          ro.disconnect();
+          if (refreshTimer) clearTimeout(refreshTimer);
+        };
       });
-    }, triggerRef);
+    }, pinRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={triggerRef} className="bg-white overflow-hidden relative h-[300vh]" id="gallery">
-      {/* Background Text Reveal (Exo Ape Style) */}
-      <div className="hidden md:block absolute left-20 top-1/2 -translate-y-1/2 z-0 pointer-events-none select-none">
-        <h2 className="text-[20vw] font-bold font-outfit text-black opacity-[0.03] whitespace-nowrap">
-          THE FACILITY
-        </h2>
+    <section className="relative bg-white" id="gallery">
+      <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-8 pt-6 pb-8 md:pt-10 md:pb-10">
+        <TextReveal>
+          <p className="text-xs tracking-[0.35em] uppercase text-black/45 font-outfit mb-3">
+            Explore
+          </p>
+        </TextReveal>
+        <TextReveal delay={0.05}>
+          <h2 className="text-4xl md:text-6xl font-bold font-outfit text-black leading-tight">
+            The <span className="text-brand-orange">Facility</span>
+          </h2>
+        </TextReveal>
+        <TextReveal delay={0.1}>
+          <p className="mt-4 text-lg text-black/60 max-w-2xl font-outfit">
+            Scroll sideways through our training floors, recovery zones, and signature spaces.
+          </p>
+        </TextReveal>
       </div>
 
-      <div className="md:h-screen flex items-center relative w-full pt-24 md:pt-0">
-        <div 
-          ref={sectionRef} 
-          className="flex flex-col md:flex-row gap-16 px-6 md:px-[15vw] py-12 md:py-0 w-full md:w-max h-auto md:h-[70vh] items-center relative z-10"
-        >
-          {galleryAssets.map((asset, index) => {
-            let sizeClasses = "w-full md:w-[450px] h-[350px] md:h-[500px]";
-            if (asset.aspectRatio === "landscape") {
-              sizeClasses = "w-full md:w-[700px] h-[350px] md:h-[450px]";
-            } else if (asset.aspectRatio === "portrait") {
-              sizeClasses = "w-full md:w-[400px] h-[450px] md:h-[650px]";
-            }
+      <div className="hidden md:block pointer-events-none absolute inset-x-0 top-[46%] -translate-y-1/2 z-0 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <p className="text-[clamp(4rem,14vw,12rem)] font-bold font-outfit text-black/[0.045] leading-[0.85] tracking-tighter whitespace-nowrap">
+            THE FACILITY
+          </p>
+        </div>
+      </div>
 
-            return (
-              <div 
-                key={asset.id} 
-                ref={(el) => { cardsRef.current[index] = el; }}
-                className={`relative flex-shrink-0 rounded-[3rem] overflow-hidden group shadow-xl transition-all duration-1000 ${sizeClasses}`}
-                style={{ 
-                  marginTop: index % 2 === 0 ? "0" : "10vh",
-                  marginBottom: index % 2 === 0 ? "10vh" : "0"
-                }}
-              >
-                <div className="absolute inset-0 scale-125">
-                  <Image
-                    src={asset.url}
-                    alt={asset.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-[3s] ease-out group-hover:scale-110"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-1000"></div>
-                
-                {/* Stunning floating label */}
-                <div className="absolute inset-0 p-10 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-10 group-hover:translate-y-0">
-                  <p className="text-white font-outfit text-xs tracking-[0.3em] uppercase mb-2">Facility View</p>
-                  <h4 className="text-white text-3xl font-bold font-outfit">{asset.alt}</h4>
-                </div>
-              </div>
-            );
-          })}
+      <div
+        ref={pinRef}
+        className="relative z-10 flex w-full items-center py-8 md:py-0 md:min-h-[min(100dvh,920px)]"
+      >
+        <div
+          ref={viewportRef}
+          className="w-full overflow-x-hidden overflow-y-visible"
+        >
+          <div className="px-6 lg:px-8">
+            <div
+              ref={trackRef}
+              className="flex flex-col md:flex-row md:flex-nowrap gap-10 md:gap-12 md:w-max md:items-center will-change-transform"
+            >
+              {galleryAssets.map((asset) => {
+                let sizeClasses =
+                  "w-full md:w-[420px] h-[300px] md:h-[480px]";
+                if (asset.aspectRatio === "landscape") {
+                  sizeClasses =
+                    "w-full md:w-[640px] h-[280px] md:h-[420px]";
+                } else if (asset.aspectRatio === "portrait") {
+                  sizeClasses =
+                    "w-full md:w-[380px] h-[400px] md:h-[580px]";
+                }
+
+                return (
+                <div
+                  key={asset.id}
+                  className={`relative flex-shrink-0 rounded-[2rem] md:rounded-[3rem] overflow-hidden group shadow-xl ${sizeClasses}`}
+                >
+                    <div className="absolute inset-0 scale-110 md:scale-125">
+                      <Image
+                        src={asset.url}
+                        alt={asset.alt}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 40vw"
+                        className="object-cover transition-transform duration-[3s] ease-out group-hover:scale-105 md:group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/15 group-hover:bg-black/5 transition-colors duration-700" />
+
+                    <div className="absolute inset-0 px-6 py-8 md:p-10 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
+                      <p className="text-white/90 font-outfit text-[10px] md:text-xs tracking-[0.3em] uppercase mb-2">
+                        Facility View
+                      </p>
+                      <h4 className="text-white text-xl md:text-3xl font-bold font-outfit leading-snug max-w-[95%]">
+                        {asset.alt}
+                      </h4>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </section>

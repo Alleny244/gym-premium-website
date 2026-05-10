@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${outfit.variable} h-full antialiased`}
+      className={`${inter.variable} ${outfit.variable} relative h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-[var(--color-background)] text-[var(--color-foreground)] antialiased overflow-x-hidden selection:bg-[var(--color-primary)] selection:text-[var(--color-background)]">
         <SmoothScroll>

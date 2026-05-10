@@ -1,11 +1,9 @@
-'use client'
+"use client";
 
-import { ReactLenis } from 'lenis/react'
-
+/**
+ * Lenis was fighting GSAP ScrollTrigger + sticky scrubbing (frames stayed stuck / black canvas).
+ * The site uses native scrolling so ScrollTrigger reads real scroll positions.
+ */
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
-  return (
-    <ReactLenis root options={{ lerp: 0.05, duration: 1.5 }}>
-      {children}
-    </ReactLenis>
-  )
+  return children;
 }
