@@ -5,13 +5,13 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const scenes = [
-  { id: 1, src: "/scenes/clip_1.mp4", text: "Unhealthy lifestyle" },
-  { id: 2, src: "/scenes/clip_2.mp4", text: "Seeing gym ad" },
-  { id: 3, src: "/scenes/clip_3.mp4", text: "Entering gym" },
-  { id: 4, src: "/scenes/clip_4.mp4", text: "Beginner workout" },
-  { id: 5, src: "/scenes/clip_5.mp4", text: "Training" },
-  { id: 6, src: "/scenes/clip_6.mp4", text: "Transformation" },
-  { id: 7, src: "/scenes/clip_7.mp4", text: "Final physique" },
+  { id: 1, src: "/gym-premium-website/scenes/clip_1.mp4", text: "Unhealthy lifestyle" },
+  { id: 2, src: "/gym-premium-website/scenes/clip_2.mp4", text: "Seeing gym ad" },
+  { id: 3, src: "/gym-premium-website/scenes/clip_3.mp4", text: "Entering gym" },
+  { id: 4, src: "/gym-premium-website/scenes/clip_4.mp4", text: "Beginner workout" },
+  { id: 5, src: "/gym-premium-website/scenes/clip_5.mp4", text: "Training" },
+  { id: 6, src: "/gym-premium-website/scenes/clip_6.mp4", text: "Transformation" },
+  { id: 7, src: "/gym-premium-website/scenes/clip_7.mp4", text: "Final physique" },
 ];
 
 export default function Transformation() {
