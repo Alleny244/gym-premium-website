@@ -75,19 +75,19 @@ export default function Gallery() {
 
   return (
     <section className="relative bg-white" id="gallery">
-      <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-8 pt-6 pb-8 md:pt-10 md:pb-10">
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-10 md:pb-10">
         <TextReveal>
           <p className="text-xs tracking-[0.35em] uppercase text-black/45 font-outfit mb-3">
             Explore
           </p>
         </TextReveal>
         <TextReveal delay={0.05}>
-          <h2 className="text-4xl md:text-6xl font-bold font-outfit text-black leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold font-outfit text-black leading-tight">
             The <span className="text-brand-orange">Facility</span>
           </h2>
         </TextReveal>
         <TextReveal delay={0.1}>
-          <p className="mt-4 text-lg text-black/60 max-w-2xl font-outfit">
+          <p className="mt-3 md:mt-4 text-sm md:text-lg text-black/60 max-w-2xl font-outfit">
             Scroll sideways through our training floors, recovery zones, and signature spaces.
           </p>
         </TextReveal>

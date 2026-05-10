@@ -27,7 +27,7 @@ export function GlassCard({ children, className = '' }: GlassCardProps) {
       onMouseLeave={() => setOpacity(0)}
       whileHover={{ y: -8, scale: 1.02 }}
       className={cn(
-        "relative overflow-hidden bg-white backdrop-blur-xl border border-gray-200 rounded-[2.5rem] p-10 transition-all duration-500 shadow-sm hover:shadow-2xl",
+        "relative overflow-hidden bg-white backdrop-blur-xl border border-gray-200 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 transition-all duration-500 shadow-sm hover:shadow-2xl",
         className
       )}
     >

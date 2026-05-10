@@ -36,15 +36,15 @@ export default function Classes() {
   ];
 
   return (
-    <section className="bg-white overflow-hidden relative pt-24 pb-0" id="classes">
-      <div className="container mx-auto px-6 mb-16 text-center">
+    <section className="bg-white overflow-hidden relative pt-14 md:pt-24 pb-0" id="classes">
+      <div className="container mx-auto px-5 sm:px-6 mb-10 md:mb-16 text-center">
         <TextReveal>
-          <h2 className="text-5xl md:text-8xl font-bold font-outfit text-black mb-6 tracking-tighter">
+          <h2 className="text-4xl sm:text-5xl md:text-8xl font-bold font-outfit text-black mb-4 md:mb-6 tracking-tighter">
             Movement <span className="text-brand-orange">Mastered</span>
           </h2>
         </TextReveal>
         <TextReveal delay={0.1}>
-          <p className="text-black/60 text-xl md:text-2xl max-w-3xl mx-auto font-outfit leading-relaxed">
+          <p className="text-black/60 text-base md:text-2xl max-w-3xl mx-auto font-outfit leading-relaxed">
             Experience our diverse classes through an immersive, high-fidelity parallax journey. Every frame is engineered for inspiration.
           </p>
         </TextReveal>

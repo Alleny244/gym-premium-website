@@ -34,23 +34,23 @@ export default function Testimonials() {
   ));
 
   return (
-    <section className="pt-12 pb-8 md:pb-10 bg-white overflow-hidden relative" id="testimonials">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-8 md:mb-10">
+    <section className="pt-10 md:pt-12 pb-6 md:pb-8 md:pb-10 bg-white overflow-hidden relative" id="testimonials">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 mb-6 md:mb-10">
         <div className="text-left">
           <TextReveal>
-            <h2 className="text-4xl md:text-6xl font-bold font-outfit mb-6 text-black">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold font-outfit mb-4 md:mb-6 text-black">
               Real <span className="text-brand-orange">Results</span>
             </h2>
           </TextReveal>
           <TextReveal>
-            <p className="text-lg text-black/60 max-w-2xl font-outfit">
+            <p className="text-sm md:text-lg text-black/60 max-w-2xl font-outfit">
               Don't just take our word for it. Hear from our community members who have experienced the Elevate difference through consistent elite training.
             </p>
           </TextReveal>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <Carousel items={cards as any} />
       </div>
     </section>
