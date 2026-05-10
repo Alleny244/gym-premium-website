@@ -8,7 +8,7 @@ import * as THREE from 'three'
 export function CharacterModel(props) {
   const group = useRef()
   // Load the Soldier.glb model
-  const { scene, animations } = useGLTF('/models/Soldier.glb')
+  const { scene, animations } = useGLTF('/gym-premium-website/models/Soldier.glb')
   const { actions } = useAnimations(animations, group)
 
   // Find bones for cursor tracking
@@ -60,4 +60,4 @@ export function CharacterModel(props) {
   )
 }
 
-useGLTF.preload('/models/Soldier.glb')
+useGLTF.preload('/gym-premium-website/models/Soldier.glb')
