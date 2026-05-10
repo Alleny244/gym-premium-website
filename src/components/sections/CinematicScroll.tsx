@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useLayoutEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -12,7 +12,7 @@ export default function CinematicScroll() {
   const frameCountRef = useRef(0);
   const playheadRef = useRef({ frame: 0 });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     
     let keepLoading = true;
@@ -27,10 +27,9 @@ export default function CinematicScroll() {
       
       const img = new Image();
       const paddedIndex = currentIndex.toString().padStart(3, '0');
-      // For GitHub Pages, we need to handle the basePath correctly
-      const isProd = process.env.NODE_ENV === 'production';
-      const basePath = isProd ? '/gym-premium-website' : '/gym-premium-website'; 
-      img.src = `${basePath}/dumbbell/ezgif-frame-${paddedIndex}.png`;
+      // Dynamically handle the basePath for both local dev and production
+      const pathPrefix = window.location.pathname.startsWith('/gym-premium-website') ? '/gym-premium-website' : '';
+      img.src = `${pathPrefix}/dumbbell/ezgif-frame-${paddedIndex}.png`;
       
       img.onload = () => {
         if (!keepLoading) return;
