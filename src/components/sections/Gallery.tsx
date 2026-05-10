@@ -28,6 +28,8 @@ export default function Gallery() {
           ScrollTrigger.refresh();
         }, 100);
         
+        console.log(`[Gallery] Initializing horizontal scroll. Amount: ${scrollAmount}px`);
+        
         // Main horizontal scroll animation
         gsap.to(sectionRef.current, {
           x: -scrollAmount,
@@ -36,8 +38,8 @@ export default function Gallery() {
           scrollTrigger: {
             trigger: triggerRef.current,
             start: "top top",
-            end: () => `+=${scrollAmount + window.innerHeight}`, // Added buffer to ensure unpinning
-            scrub: true,
+            end: () => `+=${scrollAmount + window.innerHeight}`, 
+            scrub: 1,
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
@@ -47,6 +49,7 @@ export default function Gallery() {
               gsap.to(sectionRef.current, { skewX: skew, duration: 0.5, overwrite: true });
             },
             onLeave: () => {
+              console.log("[Gallery] Scroll finished, unpinning...");
               ScrollTrigger.refresh();
             }
           }

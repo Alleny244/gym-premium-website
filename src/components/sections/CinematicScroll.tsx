@@ -42,6 +42,7 @@ export default function CinematicScroll() {
         if (currentIndex > 192) {
           keepLoading = false;
           frameCountRef.current = framesRef.current.length;
+          console.log(`[CinematicScroll] Loaded ${frameCountRef.current} frames. Initializing animation...`);
           setIsLoaded(true);
           setupAnimation();
           return;
@@ -153,19 +154,19 @@ export default function CinematicScroll() {
           scrollTrigger: {
             trigger: containerRef.current,
             start: "top top",
-            end: "bottom bottom", // Use the full height of the container
-            scrub: true,
-            onUpdate: () => {
-              requestAnimationFrame(() => {
-                const frameIndex = Math.min(
-                  Math.max(0, Math.round(playheadRef.current.frame)),
-                  frameCountRef.current - 1
-                );
-                renderFrame(frameIndex);
-              });
+            end: "bottom bottom",
+            scrub: 1, // Add slight smoothing
+            onUpdate: (self) => {
+              const frameIndex = Math.min(
+                Math.max(0, Math.round(playheadRef.current.frame)),
+                frameCountRef.current - 1
+              );
+              renderFrame(frameIndex);
             }
           }
         });
+        
+        console.log("[CinematicScroll] Animation setup complete.");
       }, containerRef);
     };
 
