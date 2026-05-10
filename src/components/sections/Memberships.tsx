@@ -42,8 +42,7 @@ export default function Memberships() {
 
           {/* Premium Plan */}
           <TextReveal delay={0.3}>
-            <GlassCard className="h-full border border-brand-orange/20 relative overflow-hidden shadow-md hover:shadow-2xl bg-white pt-10">
-              <div className="absolute top-0 inset-x-0 h-1.5 bg-[var(--color-primary)]" />
+            <GlassCard className="h-full border-t-4 border-t-[var(--color-primary)] border border-brand-orange/20 relative overflow-hidden shadow-md hover:shadow-2xl bg-white pt-10">
               <div className="absolute top-4 right-6 bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                 Recommended
               </div>

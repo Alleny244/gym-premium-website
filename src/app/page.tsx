@@ -36,11 +36,11 @@ function RevealSection({ children }: { children: React.ReactNode }) {
 
 export default function Home() {
   return (
-    <main className="relative isolate min-h-screen overflow-x-hidden bg-white">
-      {/* Cinematic lifts above this stack while pinned; after scrub ends JS drops its z-index */}
+    <main className="relative min-h-screen bg-white overflow-x-hidden">
+      {/* Scroll-controlled Image Sequence */}
       <CinematicScroll />
 
-      {/* Sit above cinematic once scrub ends (see CinematicScroll onLeave) */}
+      {/* Main Website Content with Exo Ape Style Transitions */}
       <div className="relative z-10 bg-white min-h-screen">
         <RevealSection><Hero /></RevealSection>
         <RevealSection><About /></RevealSection>
@@ -53,10 +53,7 @@ export default function Home() {
           <Gallery />
         </div>
         
-        {/* Memberships (Pricing) - Removed RevealSection for maximum reliability */}
-        <div className="relative z-30 bg-white">
-          <Memberships />
-        </div>
+        <RevealSection><Memberships /></RevealSection>
       </div>
     </main>
   );
