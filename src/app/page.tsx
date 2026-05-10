@@ -25,7 +25,7 @@ function RevealSection({ children }: { children: React.ReactNode }) {
   return (
     <motion.div 
       ref={ref}
-      style={{ scale, opacity, y }}
+      style={{ scale, opacity }}
       className="relative z-10 bg-white"
     >
       {children}
