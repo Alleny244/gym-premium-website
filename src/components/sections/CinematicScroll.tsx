@@ -27,7 +27,7 @@ export default function CinematicScroll() {
       
       const img = new Image();
       const paddedIndex = currentIndex.toString().padStart(3, '0');
-      img.src = `/gym-premium-website/dumbell/ezgif-frame-${paddedIndex}.png`;
+      img.src = `dumbbell/ezgif-frame-${paddedIndex}.png`;
       
       img.onload = () => {
         if (!keepLoading) return;

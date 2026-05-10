@@ -31,7 +31,7 @@ export function HeroScene() {
       <PresentationControls 
         global 
         snap 
-        config={{ mass: 2, tension: 500 }} 
+        damping={0.1}
         polar={[-Math.PI / 4, Math.PI / 4]} 
         azimuth={[-Math.PI / 4, Math.PI / 4]}
       >
