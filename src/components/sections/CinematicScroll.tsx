@@ -5,9 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const TOTAL_FRAMES = 192;
-const BASE_PATH = "/gym-premium-website/dumbbell";
-
-/** Set true while debugging scroll / draw issues */
+const BASE_PATH = "/gym-premium-website/dumbbell-webp";
 const DEBUG_CINEMATIC = false;
 
 const dbg = (...args: unknown[]) => {
@@ -24,159 +22,166 @@ function lerpByte(from: number, to: number, t: number) {
   return Math.round(from + (to - from) * t);
 }
 
+/**
+ * Priority groups for loading:
+ *   Group 0 – keyframes every 24th frame (8 bitmaps)  ← paint immediately so canvas isn't blank
+ *   Group 1 – keyframes every 8th frame  (24 bitmaps) ← enables acceptably smooth early scrubbing
+ *   Group 2 – all remaining frames       (160 bitmaps) ← fills in the gaps in the background
+ *
+ * Crucially ALL frames are decoded via createImageBitmap() so ctx.drawImage()
+ * is near-zero cost (no decompression on the draw call itself).
+ */
+function buildLoadGroups(): number[][] {
+  const g0: number[] = [];
+  const g1: number[] = [];
+  const g2: number[] = [];
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    if (i % 24 === 0) g0.push(i);
+    else if (i % 8 === 0) g1.push(i);
+    else g2.push(i);
+  }
+  return [g0, g1, g2];
+}
+
 export default function CinematicScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const framesRef = useRef<(HTMLImageElement | null)[]>([]);
+
+  // Store pre-decoded GPU-ready bitmaps instead of HTMLImageElements.
+  // drawImage(ImageBitmap) costs nothing — decoding already happened.
+  const bitmapsRef = useRef<(ImageBitmap | null)[]>([]);
+
+  // Cached canvas dimensions for cover-fit math (avoids style recalc each draw)
+  const dimRef = useRef({ W: 0, H: 0, imgR: 0, dw: 0, dh: 0, dx: 0, dy: 0 });
+
   const lastFrameRef = useRef(0);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  // rAF deduplication: many scroll events per frame → one paint per frame
+  const rafRef = useRef<number | null>(null);
+  const pendingFrameRef = useRef(0);
+
   const [loadProgress, setLoadProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let destroyed = false;
     let frameTrigger: ScrollTrigger | null = null;
+    let loadedCount = 0;
 
-    const sizeCanvas = () => {
+    // ─── canvas sizing ────────────────────────────────────────────────────────
+    const sizeCanvas = (bitmap?: ImageBitmap | null) => {
       const canvas = canvasRef.current;
-      if (!canvas) {
-        dbg("sizeCanvas: canvas ref is null");
-        return;
-      }
-      const dpr = window.devicePixelRatio || 1;
+      if (!canvas) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2× — 3× DPR gains nothing on canvas
       const W = window.innerWidth;
       const H = window.innerHeight;
       canvas.width = W * dpr;
       canvas.height = H * dpr;
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: false });
       if (ctx) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
+        ctxRef.current = ctx;
       }
+      // Pre-compute cover-fit geometry whenever canvas resizes
+      const bm = bitmap ?? bitmapsRef.current[lastFrameRef.current];
+      if (bm) updateDim(bm.width / bm.height, W, H);
     };
 
-    let drawCallCount = 0;
-
-    const draw = (index: number, reason?: string) => {
-      drawCallCount++;
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        dbg(`draw(${index}) skipped: no canvas`, { reason });
-        return;
-      }
-
-      let img: HTMLImageElement | null = null;
-      for (let i = index; i >= 0; i--) {
-        if (framesRef.current[i]) {
-          img = framesRef.current[i];
-          break;
-        }
-      }
-      if (!img) {
-        dbg(`draw(${index}) skipped: no bitmap`, { reason });
-        return;
-      }
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        dbg(`draw(${index}) skipped: no 2d context`, { reason });
-        return;
-      }
-
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const imgR = img.naturalWidth / img.naturalHeight;
+    const updateDim = (imgR: number, W: number, H: number) => {
       const canR = W / H;
-
       let dw, dh, dx, dy;
       if (canR > imgR) {
-        dw = W;
-        dh = W / imgR;
-        dx = 0;
-        dy = (H - dh) / 2;
+        dw = W; dh = W / imgR; dx = 0; dy = (H - dh) / 2;
       } else {
-        dh = H;
-        dw = H * imgR;
-        dx = (W - dw) / 2;
-        dy = 0;
+        dh = H; dw = H * imgR; dx = (W - dw) / 2; dy = 0;
       }
-
-      ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(img, dx, dy, dw, dh);
-      if (DEBUG_CINEMATIC && (drawCallCount <= 3 || index === 0 || index === TOTAL_FRAMES - 1)) {
-        dbg(`draw OK frame=${index}`, { reason, canvasCss: `${W}x${H}` });
-      }
+      dimRef.current = { W, H, imgR, dw, dh, dx, dy };
     };
 
-    dbg("mount", { basePath: BASE_PATH });
+    // ─── draw — O(1): bitmap is already decoded, geometry is pre-cached ──────
+    const drawImmediate = (index: number) => {
+      const ctx = ctxRef.current;
+      if (!ctx) return;
 
+      let bm: ImageBitmap | null = null;
+      for (let i = index; i >= 0; i--) {
+        if (bitmapsRef.current[i]) { bm = bitmapsRef.current[i]; break; }
+      }
+      if (!bm) return;
+
+      const { W, H, dw, dh, dx, dy } = dimRef.current;
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(bm, dx, dy, dw, dh);
+    };
+
+    // ─── rAF gate: coalesce many scroll events → 1 paint per display frame ───
+    const draw = (index: number) => {
+      pendingFrameRef.current = index;
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        drawImmediate(pendingFrameRef.current);
+      });
+    };
+
+    bitmapsRef.current = new Array(TOTAL_FRAMES).fill(null);
     sizeCanvas();
 
-    framesRef.current = new Array(TOTAL_FRAMES).fill(null);
-    let done = 0;
-    let networkErrors = 0;
-
-    const loadAll = () =>
-      new Promise<void>((resolve) => {
-        let resolved = false;
-
-        Array.from({ length: TOTAL_FRAMES }, (_, i) => {
-          const img = new Image();
+    // ─── load + decode one group of frame indices ─────────────────────────────
+    const loadGroup = (indices: number[]): Promise<void> =>
+      new Promise((resolve) => {
+        if (indices.length === 0) { resolve(); return; }
+        let done = 0;
+        indices.forEach((i) => {
           const pad = (i + 1).toString().padStart(3, "0");
-          const url = `${BASE_PATH}/ezgif-frame-${pad}.png`;
-          img.src = url;
+          const url = `${BASE_PATH}/ezgif-frame-${pad}.webp`;
 
-          const finish = () => {
-            if (destroyed) return;
-            framesRef.current[i] =
-              img.complete && img.naturalWidth > 0 ? img : null;
-            done++;
-            setLoadProgress(Math.round((done / TOTAL_FRAMES) * 100));
-            if (i === 0 && img.naturalWidth > 0) draw(0, "first-frame-onload");
-            if (done === TOTAL_FRAMES && !resolved) {
-              resolved = true;
-              dbg("load batch finished", {
-                decodedFrames: framesRef.current.filter(Boolean).length,
-                networkErrors,
-              });
-              resolve();
-            }
-          };
-          img.onload = finish;
-          img.onerror = () => {
-            networkErrors++;
-            finish();
-          };
+          fetch(url)
+            .then((r) => r.blob())
+            .then((blob) => createImageBitmap(blob)) // ← decode off-main-thread
+            .then((bm) => {
+              if (destroyed) { bm.close(); return; }
+              bitmapsRef.current[i] = bm;
+              loadedCount++;
+              setLoadProgress(Math.round((loadedCount / TOTAL_FRAMES) * 100));
+              // First usable frame → size canvas geometry and paint immediately
+              if (i === 0) {
+                updateDim(bm.width / bm.height, window.innerWidth, window.innerHeight);
+                drawImmediate(0);
+              }
+            })
+            .catch(() => { /* frame missing — fallback will find nearest */ })
+            .finally(() => {
+              if (destroyed) return;
+              done++;
+              if (done === indices.length) resolve();
+            });
         });
       });
 
-    loadAll().then(() => {
+    const [g0, g1, g2] = buildLoadGroups();
+
+    const setupScrollTrigger = () => {
       if (destroyed) return;
       setIsLoaded(true);
 
       const el = containerRef.current;
       const pinEl = pinRef.current;
-      if (!el || !pinEl) {
-        dbg("ERROR: missing container or pin ref");
-        return;
-      }
+      if (!el || !pinEl) return;
 
       sizeCanvas();
       lastFrameRef.current = 0;
-      draw(0, "post-load-initial");
+      drawImmediate(0);
 
-      /*
-       * CSS sticky was visually buried under page.tsx’s next sibling (z-10 white stack).
-       * GSAP pin uses fixed positioning + high z-index while active — reliably above page content.
-       */
       const liftAboveSiteChrome = () => {
         el.style.zIndex = "100";
         el.style.pointerEvents = "auto";
       };
-
-      /** After scrub: Hero sits at z-10 — drop cinematic so dumbbell layer cannot cover “REDEFINE…” */
       const tuckBehindFollowingSections = () => {
         el.style.zIndex = "0";
         el.style.pointerEvents = "none";
@@ -190,17 +195,23 @@ export default function CinematicScroll() {
         pin: pinEl,
         pinSpacing: true,
         anticipatePin: 1,
+        // scrub: true → animation progress == scroll progress with ZERO trailing lag.
+        // Any number > 0 (e.g. 1) means GSAP deliberately lags that many seconds
+        // behind scroll, causing the "stuck/sluggish" feeling.
         scrub: true,
         invalidateOnRefresh: true,
         onLeave: tuckBehindFollowingSections,
         onEnterBack: liftAboveSiteChrome,
         onUpdate: (self) => {
           const p = self.progress;
-          const idx = Math.round(p * (TOTAL_FRAMES - 1));
-          const clamped = Math.max(0, Math.min(idx, TOTAL_FRAMES - 1));
-          lastFrameRef.current = clamped;
-          draw(clamped, "scroll-trigger");
+          const idx = Math.min(
+            Math.round(p * (TOTAL_FRAMES - 1)),
+            TOTAL_FRAMES - 1
+          );
+          lastFrameRef.current = idx;
+          draw(idx); // rAF-gated
 
+          // Background colour fade (cheap: one style write per tick)
           const bgT = Math.max(0, Math.min(1, (p - BG_FADE_START) / (1 - BG_FADE_START)));
           const g = lerpByte(17, 255, bgT);
           pinEl.style.backgroundColor = `rgb(${g},${g},${g})`;
@@ -208,26 +219,38 @@ export default function CinematicScroll() {
       });
 
       liftAboveSiteChrome();
-
       ScrollTrigger.refresh();
-      dbg("ScrollTrigger pin active", { zIndex: pinEl.style.zIndex });
-    });
+      dbg("ScrollTrigger active");
+    };
+
+    // Kick off: skeleton → activate → fill remaining in the background
+    loadGroup(g0)
+      .then(() => loadGroup(g1))
+      .then(() => {
+        if (!destroyed) setupScrollTrigger();
+        return loadGroup(g2);
+      })
+      .then(() => dbg("All bitmaps ready"));
 
     const onResize = () => {
       sizeCanvas();
-      draw(lastFrameRef.current, "resize");
+      draw(lastFrameRef.current);
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
       destroyed = true;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
       window.removeEventListener("resize", onResize);
       frameTrigger?.kill();
+      // Release GPU memory for all decoded bitmaps
+      bitmapsRef.current.forEach((bm) => bm?.close());
+      bitmapsRef.current = [];
       const el = containerRef.current;
-      if (el) {
-        el.style.zIndex = "";
-        el.style.pointerEvents = "";
-      }
+      if (el) { el.style.zIndex = ""; el.style.pointerEvents = ""; }
     };
   }, []);
 
